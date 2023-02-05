@@ -21,8 +21,19 @@
 
 /* Fill in information from your Blynk Template here */
 /* Read more: https://bit.ly/BlynkInject */
-//#define BLYNK_TEMPLATE_ID           "TMPxxxxxx"
-//#define BLYNK_TEMPLATE_NAME         "Device"
+#define BLYNK_TEMPLATE_ID "TMPLSDTZKbjy"
+#define BLYNK_DEVICE_NAME "smart lamp"
+//#define BLYNK_AUTH_TOKEN "zw7qBFJRKM_UVjMGz3qzJog-wpwoyT46"
+#include "DHT.h"
+#include <EEPROM.h>
+
+#define dhtType DHT11
+#define pin D2
+float suhu,kelembaban;
+#define lamp1 D1
+#define lamp2 D2
+#define lamp3 D3
+#define lamp4 D4
 
 #define BLYNK_FIRMWARE_VERSION        "0.1.0"
 
@@ -33,20 +44,37 @@
 
 // Uncomment your board, or configure a custom board in Settings.h
 //#define USE_SPARKFUN_BLYNK_BOARD
-//#define USE_NODE_MCU_BOARD
+#define USE_NODE_MCU_BOARD
 //#define USE_WITTY_CLOUD_BOARD
 //#define USE_WEMOS_D1_MINI
 
 #include "BlynkEdgent.h"
-
+DHT dht(pin,dhtType);
+//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
 void setup()
 {
   Serial.begin(115200);
+  pinMode(lamp1,OUTPUT);
+  pinMode(lamp2,OUTPUT);
+  pinMode(lamp3,OUTPUT);
+  pinMode(lamp4,OUTPUT);
+  digitalWrite(lamp1,LOW);
+  digitalWrite(lamp2,LOW);
+  digitalWrite(lamp3,LOW);
+  digitalWrite(lamp4,LOW);
   delay(100);
-
+  dht.begin();
+  EEPROM.begin(512);
   BlynkEdgent.begin();
 }
 
 void loop() {
+  getSensor();
   BlynkEdgent.run();
+}
+
+void getSensor(){
+  suhu = dht.readTemperature();
+  kelembaban = dht.readHumidity();
+  
 }
