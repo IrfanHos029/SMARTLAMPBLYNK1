@@ -21,11 +21,10 @@
 
 /* Fill in information from your Blynk Template here */
 /* Read more: https://bit.ly/BlynkInject */
-#define BLYNK_TEMPLATE_ID "TMPLSDTZKbjy"
-#define BLYNK_DEVICE_NAME "smart lamp"
-//#define BLYNK_AUTH_TOKEN "zw7qBFJRKM_UVjMGz3qzJog-wpwoyT46"
+///efine BLYNK_AUTH_TOKEN "zw7qBFJRKM_UVjMGz3qzJog-wpwoyT46"
 #include "DHT.h"
 #include <EEPROM.h>
+#include "WidgetLED.h"
 
 #define dhtType DHT11
 #define pin D2
@@ -37,11 +36,23 @@ float suhu,kelembaban;
 
 #define BLYNK_FIRMWARE_VERSION        "0.1.0"
 
-#define BLYNK_PRINT Serial
+//#define BLYNK_PRINT Serial
 //#define BLYNK_DEBUG
-
+// token : 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
 #define APP_DEBUG
 
+#define GREEN     "#23C48E"
+#define BLUE      "#04C0F8"
+#define YELLOW    "#ED9D00"
+#define RED       "#D3435C"
+#define DARK_BLUE "#5F7CD8"
+
+WidgetLED led1(V6); //lampu tl
+//WidgetLED led2(V5); //lampu kerja
+//WidgetLED led3(V7); //lampu gudang
+//WidgetLED led4(V8); //lampu teras
+//WidgetLED led5(V6); //lampu status
+//WidgetLED led6(V6); //lampu warning
 // Uncomment your board, or configure a custom board in Settings.h
 //#define USE_SPARKFUN_BLYNK_BOARD
 #define USE_NODE_MCU_BOARD
@@ -50,7 +61,42 @@ float suhu,kelembaban;
 
 #include "BlynkEdgent.h"
 DHT dht(pin,dhtType);
-//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
+
+BLYNK_WRITE(V1)//lampuTL
+{
+  int value = param.asInt();
+  if(value){digitalWrite(lamp1,LOW); }//led1.on()}
+  else{digitalWrite(lamp1,HIGH); }//led1.off();}
+}
+
+BLYNK_WRITE(V0)//lampu kerja
+{
+  int value = param.asInt();
+  if(value){digitalWrite(lamp2,LOW); }//led2.on();}
+  else{digitalWrite(lamp2,HIGH); }//led2.off();}
+}
+
+BLYNK_WRITE(V2)//lampu gudang
+{
+  int value = param.asInt();
+  if(value){digitalWrite(lamp3,LOW);}// led3.on();}
+  else{digitalWrite(lamp3,HIGH); }//led3.off();}
+}
+
+BLYNK_WRITE(V3)//lampu teras
+{
+  int value = param.asInt();
+  if(value){digitalWrite(lamp4,LOW); }//led4.on()}
+  else{digitalWrite(lamp4,HIGH); }//led4.off();}
+}
+
+BLYNK_WRITE(V4)//reset
+{
+  int value = param.asInt();
+  if(value){ delay(3000); ESP.restart();}
+  
+}
+
 void setup()
 {
   Serial.begin(115200);

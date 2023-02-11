@@ -31,7 +31,7 @@ void console_init()
         getWiFiName().c_str(),
         BLYNK_TEMPLATE_NAME,
         BLYNK_TEMPLATE_ID,
-        BLYNK_FIRMWARE_TYPE,
+//        BLYNK_FIRMWARE_TYPE,
         BLYNK_FIRMWARE_VERSION
     );
   });
@@ -92,7 +92,7 @@ void console_init()
       unsigned partSize = sketchSize + ESP.getFreeSketchSpace();
 
       edgentConsole.printf(" Version:   %s (build %s)\n", BLYNK_FIRMWARE_VERSION, __DATE__ " " __TIME__);
-      edgentConsole.printf(" Type:      %s\n", BLYNK_FIRMWARE_TYPE);
+//      edgentConsole.printf(" Type:      %s\n", BLYNK_FIRMWARE_TYPE);
       edgentConsole.printf(" Platform:  %s\n", BLYNK_INFO_DEVICE);
       edgentConsole.printf(" SDK:       %s\n", ESP.getSdkVersion());
       edgentConsole.printf(" ESP Core:  %s\n", ESP.getCoreVersion().c_str());
