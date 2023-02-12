@@ -1,5 +1,12 @@
-
-#ifdef BOARD_BUTTON_PIN
+/**************************************************************
+ * This is a DEMO. You can use it only for development and testing.
+ *
+ * If you would like to add these features to your product,
+ * please contact Blynk for Business:
+ *
+ *                  http://www.blynk.io/
+ *
+ **************************************************************/
 
 volatile bool     g_buttonPressed = false;
 volatile uint32_t g_buttonPressTime = -1;
@@ -9,7 +16,7 @@ void button_action(void)
   BlynkState::set(MODE_RESET_CONFIG);
 }
 
-IRAM_ATTR
+ICACHE_RAM_ATTR
 void button_change(void)
 {
 #if BOARD_BUTTON_ACTIVE_LOW
@@ -21,13 +28,13 @@ void button_change(void)
   if (buttonState && !g_buttonPressed) {
     g_buttonPressTime = millis();
     g_buttonPressed = true;
-    DEBUG_PRINT("Hold the button for 10 seconds to reset configuration...");
+    DEBUG_PRINT("Hold the button to reset configuration...");
   } else if (!buttonState && g_buttonPressed) {
     g_buttonPressed = false;
     uint32_t buttonHoldTime = millis() - g_buttonPressTime;
     if (buttonHoldTime >= BUTTON_HOLD_TIME_ACTION) {
       button_action();
-    } else if (buttonHoldTime >= BUTTON_PRESS_TIME_ACTION) {
+    } else {
       // User action
     }
     g_buttonPressTime = -1;
@@ -44,11 +51,3 @@ void button_init()
   attachInterrupt(BOARD_BUTTON_PIN, button_change, CHANGE);
 }
 
-#else
-
-#define g_buttonPressed     false
-#define g_buttonPressTime   0
-
-void button_init() {}
-
-#endif

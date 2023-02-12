@@ -37,3 +37,4 @@ namespace BlynkState
   bool  is (State m) { return (state == m); }
   void  set(State m);
 };
+

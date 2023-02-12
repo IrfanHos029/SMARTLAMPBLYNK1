@@ -21,10 +21,11 @@
 
 /* Fill in information from your Blynk Template here */
 /* Read more: https://bit.ly/BlynkInject */
-///efine BLYNK_AUTH_TOKEN "zw7qBFJRKM_UVjMGz3qzJog-wpwoyT46"
+
 #include "DHT.h"
 #include <EEPROM.h>
-#include "WidgetLED.h"
+
+//#include "WidgetLED.h"
 
 #define dhtType DHT11
 #define pin D2
@@ -36,18 +37,18 @@ float suhu,kelembaban;
 
 #define BLYNK_FIRMWARE_VERSION        "0.1.0"
 
-//#define BLYNK_PRINT Serial
+#define BLYNK_PRINT Serial
 //#define BLYNK_DEBUG
-// token : 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
+// token : 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
 #define APP_DEBUG
+#include "BlynkEdgent.h"
+//#define GREEN     "#23C48E"
+//#define BLUE      "#04C0F8"
+//#define YELLOW    "#ED9D00"
+//#define RED       "#D3435C"
+//#define DARK_BLUE "#5F7CD8"
 
-#define GREEN     "#23C48E"
-#define BLUE      "#04C0F8"
-#define YELLOW    "#ED9D00"
-#define RED       "#D3435C"
-#define DARK_BLUE "#5F7CD8"
-
-WidgetLED led1(V6); //lampu tl
+WidgetLED led1(V10); //lampu tl
 //WidgetLED led2(V5); //lampu kerja
 //WidgetLED led3(V7); //lampu gudang
 //WidgetLED led4(V8); //lampu teras
@@ -59,14 +60,14 @@ WidgetLED led1(V6); //lampu tl
 //#define USE_WITTY_CLOUD_BOARD
 //#define USE_WEMOS_D1_MINI
 
-#include "BlynkEdgent.h"
+
 DHT dht(pin,dhtType);
 
 BLYNK_WRITE(V1)//lampuTL
 {
   int value = param.asInt();
-  if(value){digitalWrite(lamp1,LOW); }//led1.on()}
-  else{digitalWrite(lamp1,HIGH); }//led1.off();}
+  if(value){digitalWrite(lamp1,LOW); led1.on();}
+  else{digitalWrite(lamp1,HIGH); led1.off();}
 }
 
 BLYNK_WRITE(V0)//lampu kerja

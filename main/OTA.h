@@ -5,12 +5,12 @@
 
 String overTheAirURL;
 
-extern BlynkTimer edgentTimer;
+extern BlynkTimer timer;
 
 BLYNK_WRITE(InternalPinOTA) {
   overTheAirURL = param.asString();
 
-  edgentTimer.setTimeout(2000L, [](){
+  timer.setTimeout(2000L, [](){
     // Start OTA
     Blynk.logEvent("sys_ota", "OTA started");
 
@@ -192,9 +192,7 @@ void enterOTA() {
 
   bool canBegin = Update.begin(contentLength);
   if (!canBegin) {
-#ifdef BLYNK_PRINT
     Update.printError(BLYNK_PRINT);
-#endif
     OTA_FATAL("OTA begin failed");
   }
 
@@ -229,30 +227,23 @@ void enterOTA() {
 
     Update.write(buff, len);
     written += len;
+
     const int progress = (written*100)/contentLength;
     if (progress - prevProgress >= 10 || progress == 100) {
-#ifdef BLYNK_PRINT
       BLYNK_PRINT.print(String("\r ") + progress + "%");
-#endif
       prevProgress = progress;
     }
   }
-#ifdef BLYNK_PRINT
   BLYNK_PRINT.println();
-#endif
   client->stop();
 
   if (written != contentLength) {
-#ifdef BLYNK_PRINT
     Update.printError(BLYNK_PRINT);
-#endif
     OTA_FATAL(String("Write failed. Written ") + written + " / " + contentLength + " bytes");
   }
 
   if (!Update.end()) {
-#ifdef BLYNK_PRINT
     Update.printError(BLYNK_PRINT);
-#endif
     OTA_FATAL(F("Update not ended"));
   }
 
@@ -263,3 +254,4 @@ void enterOTA() {
   DEBUG_PRINT("=== Update successfully completed. Rebooting.");
   restartMCU();
 }
+
