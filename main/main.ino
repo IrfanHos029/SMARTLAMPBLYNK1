@@ -14,7 +14,7 @@ float suhu,kelembaban;
 
 #define BLYNK_PRINT Serial
 //#define BLYNK_DEBUG
-// token : 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
+// token : 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
 #define APP_DEBUG
 #include "BlynkEdgent.h"
 #define GREEN     "#23C48E"
@@ -47,6 +47,7 @@ BLYNK_CONNECTED()
 BLYNK_WRITE(V0)//lampu kerja lamp3
 {
   valLamp1 = param.asInt();
+  Serial.println("test");
 }
 
 BLYNK_WRITE(V1)//lampu tl lamp2
@@ -92,7 +93,11 @@ void setup()
 void loop() {
   getSensor();
   Run();
-  Serial.println(valLamp1);
+  
+  Blynk.virtualWrite(V10,suhu);
+  Blynk.virtualWrite(V11,kelembaban);
+  Serial.println(suhu);
+  Serial.println(kelembaban);
   BlynkEdgent.run();
 }
 
