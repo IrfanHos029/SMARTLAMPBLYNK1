@@ -100,18 +100,18 @@ protected:
     analogWrite(BOARD_LED_PIN_B, b);
     #endif
   }
-
+//dirubah
 #elif defined(BOARD_LED_PIN)       // Single color LED
 
   void initLED() {
-    pinMode(BOARD_LED_PIN, OUTPUT);
+    pinMode(ind1, OUTPUT);
   }
 
   void setLED(uint32_t color) {
     #if BOARD_LED_INVERSE
-    analogWrite(BOARD_LED_PIN, BOARD_PWM_MAX - color);
+    analogWrite(ind1, BOARD_PWM_MAX - color);
     #else
-    analogWrite(BOARD_LED_PIN, color);
+    analogWrite(ind1, color);
     #endif
   }
 
@@ -251,4 +251,3 @@ Indicator indicator;
   void indicator_init() {}
 
 #endif
-

@@ -9,6 +9,8 @@ float suhu,kelembaban;
 #define lamp2 D2
 #define lamp3 D4
 #define lamp4 D5
+#define ind1 D7
+#define ind2 D0
 
 #define BLYNK_FIRMWARE_VERSION        "0.1.0"
 
@@ -36,7 +38,7 @@ WidgetLED led6(V12); //lampu warning
 int valLamp1,valLamp2,valLamp3,valLamp4,Reset;
 //display suhu : V10
 //display kelem : v11
-
+int valIdx[4];
 DHT dht(pin,dhtType);
 
 BLYNK_CONNECTED()
@@ -47,22 +49,30 @@ BLYNK_CONNECTED()
 BLYNK_WRITE(V0)//lampu kerja lamp3
 {
   valLamp1 = param.asInt();
-  Serial.println("test");
+  EEPROM.write(valIdx[0],valLamp1);
+  EEPROM.commit();
+  //Serial.println("test");
 }
 
 BLYNK_WRITE(V1)//lampu tl lamp2
 {
   valLamp2 = param.asInt();
+  EEPROM.write(valIdx[1],valLamp2);
+  EEPROM.commit();
 }
 
 BLYNK_WRITE(V2)//lampu teras lamp4
 {
   valLamp3 = param.asInt();
+  EEPROM.write(valIdx[2],valLamp3);
+  EEPROM.commit();
 }
 
 BLYNK_WRITE(V3)//lampu gudang lamp1
 {
   valLamp4 = param.asInt();
+  EEPROM.write(valIdx[3],valLamp4);
+  EEPROM.commit();
 }
 
 
@@ -76,31 +86,53 @@ BLYNK_WRITE(V4)//reset
 void setup()
 {
   Serial.begin(115200);
+  BlynkEdgent.begin();
+  dht.begin();
+  EEPROM.begin(4);
+  //inialisasi();
   pinMode(lamp1,OUTPUT);
   pinMode(lamp2,OUTPUT);
   pinMode(lamp3,OUTPUT);
   pinMode(lamp4,OUTPUT);
-  digitalWrite(lamp1,HIGH);
-  digitalWrite(lamp2,HIGH);
-  digitalWrite(lamp3,HIGH);
-  digitalWrite(lamp4,HIGH);
+  pinMode(ind1,OUTPUT);
+  pinMode(ind2,OUTPUT);
   delay(100);
-  dht.begin();
-  EEPROM.begin(512);
-  BlynkEdgent.begin();
+  
 }
 
 void loop() {
   getSensor();
   Run();
-  
+  digitalWrite(lamp1,valIdx[0]);
+  digitalWrite(lamp2,valIdx[1]);
+  digitalWrite(lamp3,valIdx[2]);
+  digitalWrite(lamp4,valIdx[3]);
   Blynk.virtualWrite(V10,suhu);
   Blynk.virtualWrite(V11,kelembaban);
-  Serial.println(suhu);
-  Serial.println(kelembaban);
+//  Serial.println(suhu);
+//  Serial.println(kelembaban);
   BlynkEdgent.run();
 }
 
+void inialisasi(){
+  for(int i = 0; i <=3; i++)
+  {
+    valIdx[i] = EEPROM.read(i);
+    Serial.println(valIdx[i]);
+    delay(100);
+  }
+
+  Blynk.virtualWrite(V0,valIdx[0]);
+  Blynk.virtualWrite(V1,valIdx[1]);
+  Blynk.virtualWrite(V2,valIdx[2]);
+  Blynk.virtualWrite(V3,valIdx[3]);
+
+  digitalWrite(lamp1,valIdx[0]);
+  digitalWrite(lamp2,valIdx[1]);
+  digitalWrite(lamp3,valIdx[2]);
+  digitalWrite(lamp4,valIdx[3]);
+  
+}
 void getSensor(){
   suhu = dht.readTemperature();
   kelembaban = dht.readHumidity();
@@ -112,47 +144,47 @@ void Run(){
   {
     led1.setColor(GREEN);
     led1.on();
-    digitalWrite(lamp1,LOW);
+    valIdx[0] = 0;
   }
   else
   {
     led1.off();
-    digitalWrite(lamp1,HIGH);
+    valIdx[0] = 1;
   }
 
   if(valLamp2)
   {
     led2.setColor(GREEN);
     led2.on();
-    digitalWrite(lamp2,LOW);
+    valIdx[1] = 0;
   }
   else
   {
     led2.off();
-    digitalWrite(lamp2,HIGH);
+    valIdx[1] = 1;
   }
 
   if(valLamp3)
   {
     led3.setColor(GREEN);
     led3.on();
-    digitalWrite(lamp3,LOW);
+    valIdx[2] = 0;
   }
   else
   {
     led3.off();
-    digitalWrite(lamp3,HIGH);
+    valIdx[2] = 1;
   }
 
   if(valLamp4)
   {
     led4.setColor(GREEN);
     led4.on();
-    digitalWrite(lamp4,LOW);
+    valIdx[3] = 0;
   }
   else
   {
     led4.off();
-    digitalWrite(lamp4,HIGH);
+    valIdx[3] = 1;
   }
 }
