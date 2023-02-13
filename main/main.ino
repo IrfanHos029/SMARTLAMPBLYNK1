@@ -34,7 +34,7 @@ WidgetLED led4(V8); //lampu gudang
 WidgetLED led5(V9); //lampu status
 WidgetLED led6(V12); //lampu warning
 WidgetLED led7(V20); //led status mode
-
+WidgetLED led8(V21); //status error sensor
 
 #define USE_NODE_MCU_BOARD
 
@@ -47,6 +47,7 @@ int jamStart,menStart,detStart;
 int jamStop,menStop,detStop;
 int valLamp1,valLamp2,valLamp3,valLamp4,Reset;
 int stateM;
+int tgr=0;
 //display suhu : V10
 //display kelem : v11
 int valIdx[4];
@@ -143,21 +144,26 @@ void setup()
   Clock.begin();
   dht.begin();
   EEPROM.begin(4);
-  inialisasi();
+  tgr=1;
+  digitalWrite(lamp1,HIGH);
+  digitalWrite(lamp2,HIGH);
+  digitalWrite(lamp3,HIGH);
+  digitalWrite(lamp4,HIGH);
   pinMode(lamp1,OUTPUT);
   pinMode(lamp2,OUTPUT);
   pinMode(lamp3,OUTPUT);
   pinMode(lamp4,OUTPUT);
   pinMode(ind1,OUTPUT);
   pinMode(ind2,OUTPUT);
-  delay(100);
+  delay(500);
   
 }
 
 void loop() {
+  inialisasi();
   getSensor();
-  Run();
   getClock(); 
+  Run();
   show();
   Blynk.virtualWrite(V10,suhu);
   Blynk.virtualWrite(V11,kelembaban);
@@ -186,6 +192,11 @@ void show(){
   Serial.print(menStop);
   Serial.print(":");
   Serial.println(detStop);
+
+  Serial.print("suhu:");
+  Serial.print(suhu);
+  Serial.print("lembab:");
+  Serial.println(kelembaban);
 }
 void alarm()
 {
@@ -260,29 +271,58 @@ void getClock()
 }
 void inialisasi()
 {
+  if(tgr){
   for(int i = 0; i <=4; i++)
   {
     valIdx[i] = EEPROM.read(i);
     //Serial.println(valIdx[i]);
-    delay(100);
+    delay(500);
   }
-
+  
+  valLamp1 = valIdx[0];
+  valLamp2 = valIdx[1];
+  valLamp3 = valIdx[2];
+  valLamp4 = valIdx[3];
   Blynk.virtualWrite(V0,valIdx[0]);
   Blynk.virtualWrite(V1,valIdx[1]);
   Blynk.virtualWrite(V2,valIdx[2]);
   Blynk.virtualWrite(V3,valIdx[3]);
 
-  digitalWrite(lamp1,valIdx[0]);
-  digitalWrite(lamp2,valIdx[1]);
-  digitalWrite(lamp3,valIdx[2]);
-  digitalWrite(lamp4,valIdx[3]);
+//  digitalWrite(lamp1,valIdx[0]);
+//  digitalWrite(lamp2,valIdx[1]);
+//  digitalWrite(lamp3,valIdx[2]);
+//  digitalWrite(lamp4,valIdx[3]);
   stateM = valIdx[4];
-  
+
+  Serial.println("EPPROM: ");
+  Serial.print("1: ");
+  Serial.println(valIdx[0]);
+  Serial.print("2: ");
+  Serial.println(valIdx[1]);
+  Serial.print("3: ");
+  Serial.println(valIdx[2]);
+  Serial.print("4: ");
+  Serial.println(valIdx[3]);
+  Serial.print("5: ");
+  Serial.println(valIdx[4]);
+  tgr=0;
+  }
+  else{
+    return;
+  }
 }
 void getSensor(){
   suhu = dht.readTemperature();
   kelembaban = dht.readHumidity();
-  
+  if (isnan(suhu) || isnan(kelembaban))
+  {
+    Serial.println("masalah pada sensor suhu");
+    led8.setColor(RED);
+    led8.on();
+  }
+  else{
+    led8.off();
+  }
 }
 
 void Run()
