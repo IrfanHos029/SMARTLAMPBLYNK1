@@ -18,7 +18,7 @@ float suhu,kelembaban;
 
 #define BLYNK_PRINT Serial
 //#define BLYNK_DEBUG
-// token : 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
+// token : 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
 #define APP_DEBUG
 #include "BlynkEdgent.h"
 #define GREEN     "#23C48E"
@@ -33,6 +33,7 @@ WidgetLED led3(V7); //lampu teras
 WidgetLED led4(V8); //lampu gudang
 WidgetLED led5(V9); //lampu status
 WidgetLED led6(V12); //lampu warning
+WidgetLED led7(V20); //led status mode
 
 
 #define USE_NODE_MCU_BOARD
@@ -45,6 +46,7 @@ int jam,menit,detik;
 int jamStart,menStart,detStart;
 int jamStop,menStop,detStop;
 int valLamp1,valLamp2,valLamp3,valLamp4,Reset;
+int stateM;
 //display suhu : V10
 //display kelem : v11
 int valIdx[4];
@@ -55,6 +57,11 @@ BLYNK_CONNECTED()
     led5.setColor(RED);
     led5.on();
 
+}
+
+BLYNK_WRITE(V19)
+{
+  stateM = param.asInt();
 }
 
 BLYNK_WRITE(V18)
@@ -158,13 +165,9 @@ void loop() {
   getSensor();
   Run();
   getClock();
-  alarm();
   
-  Serial.print(jam);
-  Serial.print(":");
-  Serial.print(menit);
-  Serial.print(":");
-  Serial.println(detik);
+  show();
+  
   
   Blynk.virtualWrite(V10,suhu);
   Blynk.virtualWrite(V11,kelembaban);
@@ -172,9 +175,31 @@ void loop() {
   BlynkEdgent.run();
 }
 
+void show(){
+  Serial.print("JAM:");
+  Serial.print(jam);
+  Serial.print(":");
+  Serial.print(menit);
+  Serial.print(":");
+  Serial.println(detik);
+
+  Serial.print("ALARM:");
+  Serial.print(jamStart);
+  Serial.print(":");
+  Serial.print(menStart);
+  Serial.print(":");
+  Serial.println(detStart);
+
+  Serial.print("ALARM:");
+  Serial.print(jamStop);
+  Serial.print(":");
+  Serial.print(menStop);
+  Serial.print(":");
+  Serial.println(detStop);
+}
 void alarm()
 {
-  if(jamStart >= jam && menStart >= menit && detStart > detik)
+  if(jam == jamStart && menit == menStart && detik == detik)
   {
     valIdx[0] = 0;
     valIdx[1] = 0;
@@ -191,7 +216,7 @@ void alarm()
     Serial.println("ON");
   }
 
-  if(jamStop >= jam && menStop >= menit && detStop > detik)
+  else if(jam == jamStop && menit == menStop && detik == detStop)
   {
     valIdx[0] = 1;
     valIdx[1] = 1;
@@ -207,6 +232,8 @@ void alarm()
     Blynk.virtualWrite(V3,0);
     Serial.println("OFF");
   }
+
+  
 }
 
 
@@ -244,6 +271,8 @@ void getSensor(){
 }
 
 void Run(){
+  if(stateM == 0){
+    led7.off();
   if(valLamp1)
   {
     led1.setColor(GREEN);
@@ -306,4 +335,13 @@ void Run(){
   digitalWrite(lamp2,valIdx[1]);
   digitalWrite(lamp3,valIdx[2]);
   digitalWrite(lamp4,valIdx[3]);
+  }
+
+  else if(stateM == 1)
+  {
+    led7.setColor(RED);
+    led7.on();
+    alarm();
+  }
+
 }
