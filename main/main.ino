@@ -1,6 +1,6 @@
 
 #include "DHT.h"
-#include <EEPROM.h>
+//#include <EEPROM.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 
@@ -27,14 +27,14 @@ float suhu,kelembaban;
 #define RED       "#D3435C"
 #define DARK_BLUE "#5F7CD8"
 
-WidgetLED led1(V5); //lampu kerja
-WidgetLED led2(V6); //lampu tl
-WidgetLED led3(V7); //lampu teras
-WidgetLED led4(V8); //lampu gudang
-WidgetLED led5(V9); //lampu status
-WidgetLED led6(V12); //lampu warning
-WidgetLED led7(V20); //led status mode
-WidgetLED led8(V21); //status error sensor
+WidgetLED led1(V6); //lampu kerja
+WidgetLED led2(V7); //lampu tl
+WidgetLED led3(V8); //lampu teras
+WidgetLED led4(V9); //lampu gudang
+WidgetLED led5(V13); //lampu status
+WidgetLED led6(V11); //lampu clock
+WidgetLED led7(V10); //led status mode
+WidgetLED led8(V12); //status error sensor
 
 #define USE_NODE_MCU_BOARD
 
@@ -55,19 +55,19 @@ DHT dht(pin,dhtType);
 
 BLYNK_CONNECTED()
 {
-    led5.setColor(RED);
+    led5.setColor(GREEN);
     led5.on();
 
 }
 
-BLYNK_WRITE(V19)
+BLYNK_WRITE(V5)
 {
   stateM = param.asInt();
-  EEPROM.write(4,stateM);
+  EEPROM.write(54,stateM);
   EEPROM.commit();
 }
 
-BLYNK_WRITE(V18)
+BLYNK_WRITE(V14)
 {
   
   TimeInputParam t(param);
@@ -100,40 +100,40 @@ BLYNK_WRITE(V18)
 
   }
   
-BLYNK_WRITE(V0)//lampu kerja lamp3
+BLYNK_WRITE(V1)//lampu kerja 
 {
   valLamp1 = param.asInt();
-  EEPROM.write(0,valLamp1);
+  EEPROM.write(50,valLamp1);
   EEPROM.commit();
   //Serial.println("test");
 }
 
-BLYNK_WRITE(V1)//lampu tl lamp2
+BLYNK_WRITE(V2)//lampu tl 
 {
   valLamp2 = param.asInt();
-  EEPROM.write(1,valLamp2);
+  EEPROM.write(51,valLamp2);
   EEPROM.commit();
 }
 
-BLYNK_WRITE(V2)//lampu teras lamp4
+BLYNK_WRITE(V3)//lampu teras 
 {
   valLamp3 = param.asInt();
-  EEPROM.write(2,valLamp3);
+  EEPROM.write(52,valLamp3);
   EEPROM.commit();
 }
 
-BLYNK_WRITE(V3)//lampu gudang lamp1
+BLYNK_WRITE(V4)//lampu gudang
 {
   valLamp4 = param.asInt();
-  EEPROM.write(3,valLamp4);
+  EEPROM.write(53,valLamp4);
   EEPROM.commit();
 }
 
 
-BLYNK_WRITE(V4)//reset
+BLYNK_WRITE(V0)//reset
 {
   int value = param.asInt();
-  if(value){ delay(3000); ESP.restart();}
+  if(value){ delay(5000); ESP.restart();}
   
 }
 
@@ -143,7 +143,7 @@ void setup()
   BlynkEdgent.begin();
   Clock.begin();
   dht.begin();
-  EEPROM.begin(4);
+ // EEPROM.begin(4);
   tgr=1;
   digitalWrite(lamp1,HIGH);
   digitalWrite(lamp2,HIGH);
@@ -165,8 +165,8 @@ void loop() {
   getClock(); 
   Run();
   show();
-  Blynk.virtualWrite(V10,suhu);
-  Blynk.virtualWrite(V11,kelembaban);
+  Blynk.virtualWrite(V16,suhu);
+  Blynk.virtualWrite(V17,kelembaban);
   
   BlynkEdgent.run();
 }
@@ -210,17 +210,17 @@ void alarm()
   digitalWrite(lamp2,valIdx[1]);
   digitalWrite(lamp3,valIdx[2]);
   digitalWrite(lamp4,valIdx[3]);
-    Blynk.virtualWrite(V0,1);
     Blynk.virtualWrite(V1,1);
     Blynk.virtualWrite(V2,1);
     Blynk.virtualWrite(V3,1);
-    led1.setColor(GREEN);
+    Blynk.virtualWrite(V4,1);
+    led1.setColor(RED);
     led1.on();
-    led2.setColor(GREEN);
+    led2.setColor(RED);
     led2.on();
-    led3.setColor(GREEN);
+    led3.setColor(RED);
     led3.on();
-    led4.setColor(GREEN);
+    led4.setColor(RED);
     led4.on();
     Serial.println("ON");
   }
@@ -235,10 +235,10 @@ void alarm()
   digitalWrite(lamp2,valIdx[1]);
   digitalWrite(lamp3,valIdx[2]);
   digitalWrite(lamp4,valIdx[3]);
-    Blynk.virtualWrite(V0,0);
     Blynk.virtualWrite(V1,0);
     Blynk.virtualWrite(V2,0);
     Blynk.virtualWrite(V3,0);
+    Blynk.virtualWrite(V4,0);
     Serial.println("OFF");
     led1.off();
     led2.off();
@@ -272,9 +272,9 @@ void getClock()
 void inialisasi()
 {
   if(tgr){
-  for(int i = 0; i <=4; i++)
+  for(int i = 50; i <=54; i++)
   {
-    valIdx[i] = EEPROM.read(i);
+    valIdx[i-50] = EEPROM.read(i);
     //Serial.println(valIdx[i]);
     delay(500);
   }
@@ -283,10 +283,10 @@ void inialisasi()
   valLamp2 = valIdx[1];
   valLamp3 = valIdx[2];
   valLamp4 = valIdx[3];
-  Blynk.virtualWrite(V0,valIdx[0]);
-  Blynk.virtualWrite(V1,valIdx[1]);
-  Blynk.virtualWrite(V2,valIdx[2]);
-  Blynk.virtualWrite(V3,valIdx[3]);
+  Blynk.virtualWrite(V1,valIdx[0]);
+  Blynk.virtualWrite(V2,valIdx[1]);
+  Blynk.virtualWrite(V3,valIdx[2]);
+  Blynk.virtualWrite(V4,valIdx[3]);
 
 //  digitalWrite(lamp1,valIdx[0]);
 //  digitalWrite(lamp2,valIdx[1]);
@@ -317,7 +317,7 @@ void getSensor(){
   if (isnan(suhu) || isnan(kelembaban))
   {
     Serial.println("masalah pada sensor suhu");
-    led8.setColor(RED);
+    led8.setColor(YELLOW);
     led8.on();
   }
   else{
@@ -331,7 +331,7 @@ void Run()
     led7.off();
   if(valLamp1)
   {
-    led1.setColor(GREEN);
+    led1.setColor(RED);
     led1.on();
     valIdx[0] = 0;
   }
@@ -343,7 +343,7 @@ void Run()
 
   if(valLamp2)
   {
-    led2.setColor(GREEN);
+    led2.setColor(RED);
     led2.on();
     valIdx[1] = 0;
   }
@@ -355,7 +355,7 @@ void Run()
 
   if(valLamp3)
   {
-    led3.setColor(GREEN);
+    led3.setColor(RED);
     led3.on();
     valIdx[2] = 0;
   }
@@ -367,7 +367,7 @@ void Run()
 
   if(valLamp4)
   {
-    led4.setColor(GREEN);
+    led4.setColor(RED);
     led4.on();
     valIdx[3] = 0;
   }

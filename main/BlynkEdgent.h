@@ -23,8 +23,6 @@ extern "C" {
 #include "Indicator.h"
 #include "OTA.h"
 
-WidgetLED led(V10);
-
 inline
 void BlynkState::set(State m) {
   if (state != m && m < MODE_MAX_VALUE) {
