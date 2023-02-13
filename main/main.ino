@@ -2,7 +2,6 @@
 #include "DHT.h"
 #include <EEPROM.h>
 #include <NTPClient.h>
-//#include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
 #define dhtType DHT11
@@ -19,7 +18,7 @@ float suhu,kelembaban;
 
 #define BLYNK_PRINT Serial
 //#define BLYNK_DEBUG
-// token : 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
+// token : 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
 #define APP_DEBUG
 #include "BlynkEdgent.h"
 #define GREEN     "#23C48E"
@@ -158,18 +157,68 @@ void setup()
 void loop() {
   getSensor();
   Run();
+  getClock();
+  alarm();
+  
+  Serial.print(jam);
+  Serial.print(":");
+  Serial.print(menit);
+  Serial.print(":");
+  Serial.println(detik);
+  
+  Blynk.virtualWrite(V10,suhu);
+  Blynk.virtualWrite(V11,kelembaban);
+  
+  BlynkEdgent.run();
+}
+
+void alarm()
+{
+  if(jamStart >= jam && menStart >= menit && detStart > detik)
+  {
+    valIdx[0] = 0;
+    valIdx[1] = 0;
+    valIdx[2] = 0;
+    valIdx[3] = 0;
   digitalWrite(lamp1,valIdx[0]);
   digitalWrite(lamp2,valIdx[1]);
   digitalWrite(lamp3,valIdx[2]);
   digitalWrite(lamp4,valIdx[3]);
-  Blynk.virtualWrite(V10,suhu);
-  Blynk.virtualWrite(V11,kelembaban);
-//  Serial.println(suhu);
-//  Serial.println(kelembaban);
-  BlynkEdgent.run();
+    Blynk.virtualWrite(V0,1);
+    Blynk.virtualWrite(V1,1);
+    Blynk.virtualWrite(V2,1);
+    Blynk.virtualWrite(V3,1);
+    Serial.println("ON");
+  }
+
+  if(jamStop >= jam && menStop >= menit && detStop > detik)
+  {
+    valIdx[0] = 1;
+    valIdx[1] = 1;
+    valIdx[2] = 1;
+    valIdx[3] = 1;
+  digitalWrite(lamp1,valIdx[0]);
+  digitalWrite(lamp2,valIdx[1]);
+  digitalWrite(lamp3,valIdx[2]);
+  digitalWrite(lamp4,valIdx[3]);
+    Blynk.virtualWrite(V0,0);
+    Blynk.virtualWrite(V1,0);
+    Blynk.virtualWrite(V2,0);
+    Blynk.virtualWrite(V3,0);
+    Serial.println("OFF");
+  }
 }
 
-void inialisasi(){
+
+void getClock()
+{
+  Clock.update();
+  jam = Clock.getHours();
+  menit = Clock.getMinutes();
+  detik = Clock.getSeconds();
+}
+void inialisasi()
+{
 //  for(int i = 0; i <=3; i++)
 //  {
 //    valIdx[i] = EEPROM.read(i);
@@ -242,4 +291,19 @@ void Run(){
     led4.off();
     valIdx[3] = 1;
   }
+
+  if(detik % 2)
+  {
+    led6.setColor(YELLOW);
+    led6.on();
+  }
+  else
+  {
+    led6.off();
+  }
+
+  digitalWrite(lamp1,valIdx[0]);
+  digitalWrite(lamp2,valIdx[1]);
+  digitalWrite(lamp3,valIdx[2]);
+  digitalWrite(lamp4,valIdx[3]);
 }
