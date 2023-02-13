@@ -62,6 +62,8 @@ BLYNK_CONNECTED()
 BLYNK_WRITE(V19)
 {
   stateM = param.asInt();
+  EEPROM.write(4,stateM);
+  EEPROM.commit();
 }
 
 BLYNK_WRITE(V18)
@@ -95,21 +97,12 @@ BLYNK_WRITE(V18)
      detStop = t.getStopSecond();
   }
 
-//  Serial.println(String("Time zone: ") + t.getTZ());
-//
-//  for (int i = 1; i <= 7; i++) {
-//    if (t.isWeekdaySelected(i)) {
-//      Serial.println(String("Day ") + i + " is selected");
-//    }
-//  }
-//
-//  Serial.println();
   }
   
 BLYNK_WRITE(V0)//lampu kerja lamp3
 {
   valLamp1 = param.asInt();
-  EEPROM.write(valIdx[0],valLamp1);
+  EEPROM.write(0,valLamp1);
   EEPROM.commit();
   //Serial.println("test");
 }
@@ -117,21 +110,21 @@ BLYNK_WRITE(V0)//lampu kerja lamp3
 BLYNK_WRITE(V1)//lampu tl lamp2
 {
   valLamp2 = param.asInt();
-  EEPROM.write(valIdx[1],valLamp2);
+  EEPROM.write(1,valLamp2);
   EEPROM.commit();
 }
 
 BLYNK_WRITE(V2)//lampu teras lamp4
 {
   valLamp3 = param.asInt();
-  EEPROM.write(valIdx[2],valLamp3);
+  EEPROM.write(2,valLamp3);
   EEPROM.commit();
 }
 
 BLYNK_WRITE(V3)//lampu gudang lamp1
 {
   valLamp4 = param.asInt();
-  EEPROM.write(valIdx[3],valLamp4);
+  EEPROM.write(3,valLamp4);
   EEPROM.commit();
 }
 
@@ -150,7 +143,7 @@ void setup()
   Clock.begin();
   dht.begin();
   EEPROM.begin(4);
-  //inialisasi();
+  inialisasi();
   pinMode(lamp1,OUTPUT);
   pinMode(lamp2,OUTPUT);
   pinMode(lamp3,OUTPUT);
@@ -164,11 +157,8 @@ void setup()
 void loop() {
   getSensor();
   Run();
-  getClock();
-  
+  getClock(); 
   show();
-  
-  
   Blynk.virtualWrite(V10,suhu);
   Blynk.virtualWrite(V11,kelembaban);
   
@@ -213,6 +203,14 @@ void alarm()
     Blynk.virtualWrite(V1,1);
     Blynk.virtualWrite(V2,1);
     Blynk.virtualWrite(V3,1);
+    led1.setColor(GREEN);
+    led1.on();
+    led2.setColor(GREEN);
+    led2.on();
+    led3.setColor(GREEN);
+    led3.on();
+    led4.setColor(GREEN);
+    led4.on();
     Serial.println("ON");
   }
 
@@ -231,6 +229,10 @@ void alarm()
     Blynk.virtualWrite(V2,0);
     Blynk.virtualWrite(V3,0);
     Serial.println("OFF");
+    led1.off();
+    led2.off();
+    led3.off();
+    led4.off();
   }
 
   
@@ -243,15 +245,27 @@ void getClock()
   jam = Clock.getHours();
   menit = Clock.getMinutes();
   detik = Clock.getSeconds();
+
+  if(detik % 2)
+  {
+    digitalWrite(ind2,HIGH);
+    led6.setColor(YELLOW);
+    led6.on();
+  }
+  else
+  {
+    led6.off();
+    digitalWrite(ind2,LOW);
+  }
 }
 void inialisasi()
 {
-//  for(int i = 0; i <=3; i++)
-//  {
-//    valIdx[i] = EEPROM.read(i);
-//    //Serial.println(valIdx[i]);
-//    delay(100);
-//  }
+  for(int i = 0; i <=4; i++)
+  {
+    valIdx[i] = EEPROM.read(i);
+    //Serial.println(valIdx[i]);
+    delay(100);
+  }
 
   Blynk.virtualWrite(V0,valIdx[0]);
   Blynk.virtualWrite(V1,valIdx[1]);
@@ -262,6 +276,7 @@ void inialisasi()
   digitalWrite(lamp2,valIdx[1]);
   digitalWrite(lamp3,valIdx[2]);
   digitalWrite(lamp4,valIdx[3]);
+  stateM = valIdx[4];
   
 }
 void getSensor(){
@@ -270,7 +285,8 @@ void getSensor(){
   
 }
 
-void Run(){
+void Run()
+{
   if(stateM == 0){
     led7.off();
   if(valLamp1)
@@ -319,16 +335,6 @@ void Run(){
   {
     led4.off();
     valIdx[3] = 1;
-  }
-
-  if(detik % 2)
-  {
-    led6.setColor(YELLOW);
-    led6.on();
-  }
-  else
-  {
-    led6.off();
   }
 
   digitalWrite(lamp1,valIdx[0]);
