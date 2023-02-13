@@ -1,6 +1,9 @@
 
 #include "DHT.h"
 #include <EEPROM.h>
+#include <NTPClient.h>
+//#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
 
 #define dhtType DHT11
 #define pin D6
@@ -35,6 +38,13 @@ WidgetLED led6(V12); //lampu warning
 
 #define USE_NODE_MCU_BOARD
 
+const long utcOffsetInSeconds = 25200;
+WiFiUDP ntpUDP;
+NTPClient Clock(ntpUDP, "asia.pool.ntp.org", utcOffsetInSeconds);
+
+int jam,menit,detik;
+int jamStart,menStart,detStart;
+int jamStop,menStop,detStop;
 int valLamp1,valLamp2,valLamp3,valLamp4,Reset;
 //display suhu : V10
 //display kelem : v11
@@ -47,6 +57,7 @@ BLYNK_CONNECTED()
     led5.on();
 
 }
+
 BLYNK_WRITE(V18)
 {
   
@@ -60,21 +71,11 @@ BLYNK_WRITE(V18)
                    t.getStartHour() + ":" +
                    t.getStartMinute() + ":" +
                    t.getStartSecond());
+    jamStart = t.getStartHour();
+    menStart = t.getStartMinute();
+    detStart = t.getStartSecond();
   }
-  else if (t.isStartSunrise())
-  {
-    Serial.println("Start at sunrise");
-  }
-  else if (t.isStartSunset())
-  {
-    Serial.println("Start at sunset");
-  }
-  else
-  {
-    // Do nothing
-  }
-
-  // Process stop time
+  
 
   if (t.hasStopTime())
   {
@@ -82,37 +83,21 @@ BLYNK_WRITE(V18)
                    t.getStopHour() + ":" +
                    t.getStopMinute() + ":" +
                    t.getStopSecond());
-  }
-  else if (t.isStopSunrise())
-  {
-    Serial.println("Stop at sunrise");
-  }
-  else if (t.isStopSunset())
-  {
-    Serial.println("Stop at sunset");
-  }
-  else
-  {
-    // Do nothing: no stop time was set
+
+     jamStop = t.getStopHour();
+     menStop = t.getStopMinute();
+     detStop = t.getStopSecond();
   }
 
-  // Process timezone
-  // Timezone is already added to start/stop time
-
-  Serial.println(String("Time zone: ") + t.getTZ());
-
-  // Get timezone offset (in seconds)
-  Serial.println(String("Time zone offset: ") + t.getTZ_Offset());
-
-  // Process weekdays (1. Mon, 2. Tue, 3. Wed, ...)
-
-  for (int i = 1; i <= 7; i++) {
-    if (t.isWeekdaySelected(i)) {
-      Serial.println(String("Day ") + i + " is selected");
-    }
-  }
-
-  Serial.println();
+//  Serial.println(String("Time zone: ") + t.getTZ());
+//
+//  for (int i = 1; i <= 7; i++) {
+//    if (t.isWeekdaySelected(i)) {
+//      Serial.println(String("Day ") + i + " is selected");
+//    }
+//  }
+//
+//  Serial.println();
   }
   
 BLYNK_WRITE(V0)//lampu kerja lamp3
@@ -156,6 +141,7 @@ void setup()
 {
   Serial.begin(115200);
   BlynkEdgent.begin();
+  Clock.begin();
   dht.begin();
   EEPROM.begin(4);
   //inialisasi();
@@ -184,12 +170,12 @@ void loop() {
 }
 
 void inialisasi(){
-  for(int i = 0; i <=3; i++)
-  {
-    valIdx[i] = EEPROM.read(i);
-    Serial.println(valIdx[i]);
-    delay(100);
-  }
+//  for(int i = 0; i <=3; i++)
+//  {
+//    valIdx[i] = EEPROM.read(i);
+//    //Serial.println(valIdx[i]);
+//    delay(100);
+//  }
 
   Blynk.virtualWrite(V0,valIdx[0]);
   Blynk.virtualWrite(V1,valIdx[1]);
