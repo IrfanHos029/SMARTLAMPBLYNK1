@@ -1,11 +1,13 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#define BLYNK_TEMPLATE_ID           "TMPxxxxxx"
-#define BLYNK_TEMPLATE_NAME         "Device"
+
+#define BLYNK_TEMPLATE_ID "TMPL6S0qNZ3a4"
+#define BLYNK_TEMPLATE_NAME "smartLamp"
+
 #ifndef STASSID
-#define STASSID "your-ssid"
-#define STAPSK "your-password"
+#define STASSID "Wifi"
+#define STAPSK "00000000"
 #endif
 
 const char* ssid = STASSID;
@@ -32,9 +34,50 @@ WiFiManager wm; // global wm instance
 WiFiManagerParameter custom_field; // global param ( for non blocking w params )
 
 #include "BlynkEdgent.h"
-int led_pin = 13;
+int led_pin = D7;
 #define N_DIMMERS 3
-int dimmer_pin[] = { 14, 5, 15 };
+int dimmer_pin[] = { D0, D0, 15 };
+#define led1 D4
+#define led2 D2
+#define led3 D1
+
+int stateLed1;
+int stateLed2;
+int stateLed3;
+
+WidgetLED led(V3);
+
+#define BLYNK_GREEN     "#23C48E"
+#define BLYNK_BLUE      "#04C0F8"
+#define BLYNK_YELLOW    "#ED9D00"
+#define BLYNK_RED       "#D3435C"
+#define BLYNK_DARK_BLUE "#5F7CD8"
+
+BLYNK_CONNECTED() {
+  // Turn LED on, so colors are visible
+  led.on();
+}
+
+BLYNK_WRITE(V0)
+{
+  stateLed1 = param.asInt(); // assigning incoming value from pin V1 to a variable
+  Serial.println(stateLed1);
+  // process received value
+}
+
+BLYNK_WRITE(V1)
+{
+  stateLed2 = param.asInt(); // assigning incoming value from pin V1 to a variable
+
+  // process received value
+}
+
+BLYNK_WRITE(V2)
+{
+  stateLed3 = param.asInt(); // assigning incoming value from pin V1 to a variable
+
+  // process received value
+}
 void setup()
 {
   Serial.begin(115200);
@@ -42,12 +85,17 @@ void setup()
   /* switch on led */
   pinMode(led_pin, OUTPUT);
   digitalWrite(led_pin, LOW);
-
+  digitalWrite(led1, HIGH);
+  digitalWrite(led2, HIGH);
+  digitalWrite(led3, HIGH);
+  pinMode(led1,OUTPUT);
+  pinMode(led2,OUTPUT);
+  pinMode(led3,OUTPUT);
   Serial.println("Booting");
   WiFi.mode(WIFI_STA);
 
   //WiFi.begin(ssid, password);
-   bool res;
+    bool res;
     // res = wm.autoConnect(); // auto generated AP name from chipid
     // res = wm.autoConnect("AutoConnectAP"); // anonymous ap
     res = wm.autoConnect("AutoConnectAP","password"); // password protected ap
@@ -60,10 +108,10 @@ void setup()
         //if you get here you have connected to the WiFi    
         Serial.println("connected...yeey :)");
     }
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     WiFi.begin(ssid, password);
     Serial.println("Retrying connection...");
-  }
+    }
   /* switch off led */
   digitalWrite(led_pin, HIGH);
 
@@ -105,4 +153,13 @@ void setup()
 void loop() {
    ArduinoOTA.handle();
   BlynkEdgent.run();
+
+  if(stateLed1 == 1){ digitalWrite( led1,HIGH);}
+  else{ digitalWrite( led1,LOW); }
+
+  if(stateLed2 == 1){ digitalWrite( led2,HIGH);}
+  else{ digitalWrite( led2,LOW); }
+
+  if(stateLed3 == 1){ digitalWrite( led3,HIGH);}
+  else{ digitalWrite( led3,LOW); }
 }

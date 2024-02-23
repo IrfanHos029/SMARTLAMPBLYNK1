@@ -12,7 +12,7 @@
   #define BOARD_BUTTON_PIN            0
   #define BOARD_BUTTON_ACTIVE_LOW     true
 
-  #define BOARD_LED_PIN               2
+  #define BOARD_LED_PIN               D7
   #define BOARD_LED_INVERSE           true
   #define BOARD_LED_BRIGHTNESS        255
 
@@ -98,4 +98,3 @@
   #define DEBUG_PRINT(...)
   #define DEBUG_PRINTF(...)
 #endif
-
