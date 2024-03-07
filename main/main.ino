@@ -26,6 +26,7 @@ const char* host = "OTA-LEDS";
 #include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
 
 #define TRIGGER_PIN 0
+#define button 12
 #define VIN 3.3 // V power voltage, 3.3v in case of NodeMCU
 #define R 10000 // Voltage devider resistor value
 const int Analog_Pin = 0; // Analog pin A0
@@ -45,7 +46,7 @@ WiFiManagerParameter custom_field; // global param ( for non blocking w params )
 BlynkTimer timer;
 BlynkTimer timer2;
 int led_pin = D7;
-#define N_DIMMERS 3
+#define N_DIMMERS 1
 int dimmer_pin[] = { D0, D0, 15 };
 #define led1 D4
 #define led2 D2
@@ -55,10 +56,11 @@ int  stateLed1;
 int  stateLed2;
 int  stateLed3;
 int  TIMER = 0;
-bool stateWifi;
+bool stateWifi,stateMode;
+bool stateAuto;
 bool wm_nonblocking = false;
-
-WidgetLED led(V5);
+bool stateRun = false;
+WidgetLED led(V6);
 
 #define BLYNK_GREEN     "#23C48E"
 #define BLYNK_BLUE      "#04C0F8"
@@ -108,6 +110,14 @@ BLYNK_WRITE(V2)
   EEPROM.commit();
   // process received value
 }
+
+BLYNK_WRITE(V5)
+{
+  stateAuto = param.asInt(); // assigning incoming value from pin V1 to a variable
+  EEPROM.write(stateAuto,4);
+  EEPROM.commit();
+  // process received value
+}
 void setup()
 {
   Serial.begin(115200);
@@ -116,15 +126,17 @@ void setup()
   /* switch on led */
   pinMode(led_pin, OUTPUT);
   digitalWrite(led_pin, LOW);
-  digitalWrite(led1, HIGH);
-  digitalWrite(led2, HIGH);
-  digitalWrite(led3, HIGH);
+//  digitalWrite(led1, HIGH);
+//  digitalWrite(led2, HIGH);
+//  digitalWrite(led3, HIGH);
   pinMode(led1,OUTPUT);
   pinMode(led2,OUTPUT);
   pinMode(led3,OUTPUT);
+  pinMode(button,INPUT);
   Serial.println("Booting");
   //WiFi.mode(WIFI_STA);
   stateWifi = EEPROM.read(0);
+  stateMode = EEPROM.read(0);
   if(wm_nonblocking) wm.setConfigPortalBlocking(false);
 
   if(stateWifi){
@@ -149,21 +161,25 @@ void setup()
       stateLed1 = EEPROM.read(1);
       stateLed2 = EEPROM.read(2);
       stateLed3 = EEPROM.read(3);
+      stateAuto = EEPROM.read(4);
 
       Blynk.virtualWrite(V0,stateLed1);
       Blynk.virtualWrite(V1,stateLed2);
       Blynk.virtualWrite(V2,stateLed3);
+      Blynk.virtualWrite(V5,stateAuto);
       
       /* switch off led */
       digitalWrite(led_pin, HIGH);
-    
+
+
+      //digitalWrite(led_pin, LOW);
       /* configure dimmers, and OTA server events */
       analogWriteRange(1000);
-      analogWrite(led_pin, 990);
+      analogWrite(led_pin, 50);
     
       for (int i = 0; i < N_DIMMERS; i++) {
         pinMode(dimmer_pin[i], OUTPUT);
-        analogWrite(dimmer_pin[i], 50);
+        analogWrite(dimmer_pin[i], HIGH);
       }
     
       ArduinoOTA.setHostname(host);
@@ -171,7 +187,7 @@ void setup()
         for (int i = 0; i < N_DIMMERS; i++) {
           analogWrite(dimmer_pin[i], 0);
         }
-        analogWrite(led_pin, 0);
+        digitalWrite(led_pin, 255);
       });
     
       ArduinoOTA.onEnd([]() {  // do a fancy thing with our board led at end
@@ -199,6 +215,8 @@ void setup()
     stateLed1 = EEPROM.read(1);
     stateLed2 = EEPROM.read(2);
     stateLed3 = EEPROM.read(3);
+    stateAuto = EEPROM.read(4);
+    stateRun = 0;
   }
 
 }
@@ -206,6 +224,7 @@ void setup()
 void loop() {
   LDR_Val = analogRead(Analog_Pin);
   Iluminance = conversion(LDR_Val);
+  checkButton();
   
   if(stateWifi){
     ArduinoOTA.handle();
@@ -213,21 +232,29 @@ void loop() {
     timer.run();
     timer2.run();
     stateWIFI();
+    if(stateAuto){ blink(1); kalkulasi(); }
+    else{ blink(0); stateRun = 0; }
   }
+
   else
   {
-    kalkulasi();
+    if(stateAuto){ blink(1); kalkulasi(); }
+    else{ blink(0); stateRun = 1; }
   }
   
   
-  if(stateLed1 == 1){ digitalWrite( led1,LOW);}
-  else{ digitalWrite( led1,HIGH); }
+  
+  
+  if(stateLed1 == 1 && stateAuto == 0){ digitalWrite( led1,LOW);}
+  else if (stateLed1 == 0 && stateAuto == 0){ digitalWrite( led1,HIGH); }
 
-  if(stateLed2 == 1){ digitalWrite( led2,LOW);}
-  else{ digitalWrite( led2,HIGH); }
+  if(stateLed2 == 1 && stateAuto == 0){ digitalWrite( led2,LOW);}
+  else if(stateLed2 == 0 && stateAuto == 0){ digitalWrite( led2,HIGH); }
 
-  if(stateLed3 == 1){ digitalWrite( led3,LOW);}
-  else{ digitalWrite( led3,HIGH); }
+  if(stateLed3 == 1 && stateAuto == 0){ digitalWrite( led3,LOW);}
+  else if(stateLed3 == 0 && stateAuto == 0){ digitalWrite( led3,HIGH); }
+
+  digitalWrite(dimmer_pin[0],stateRun);
 }
 
 void stateWIFI() {
@@ -266,11 +293,60 @@ int conversion(int raw_val){
 }
 
 void kalkulasi(){
-  if(LDR_Val <= 500 ){
-    stateLed2 = 1;
-    stateLed3 = 1;
-    EEPROM.write(2,stateLed2);
-    EEPROM.write(3,stateLed3);
+  if(LDR_Val <= 450 ){
+     stateLed2 = 1;
+     stateLed3 = 1;
+  }
+
+  else if(LDR_Val >= 1000 ){
+     stateLed2 = 0;
+     stateLed3 = 0;
+  }
+
+  if(stateLed2 == 1 && stateAuto == 1){ digitalWrite( led2,LOW);}
+  else if (stateLed2 == 0 && stateAuto == 1){ digitalWrite( led2,HIGH); }
+
+  if(stateLed3 == 1 && stateAuto == 1){ digitalWrite( led3,LOW);}
+  else if(stateLed3 == 0 && stateAuto == 1){ digitalWrite( led3,HIGH); }
+}
+
+
+void checkButton()
+{
+  if(digitalRead(button) == HIGH)
+  {
+    stateWifi = !stateWifi;
+    EEPROM.write(0,stateWifi);
     EEPROM.commit();
+    Serial.println(String() + "button ditekan,stateWifi:" + stateWifi + " stateMode:" + stateMode);
+  }
+     
+  if(stateMode != stateWifi)
+  {  
+    Serial.println("mode berubah");
+    for (int i = 0; i < 40; i++) 
+   {
+     analogWrite(led_pin, (i * 100) % 1001);
+     analogWrite(dimmer_pin[0], (i * 100) % 1001);
+//      for(int a=0;a<2;a++){ strip.setPixelColor(dot2[a],strip.Color((i * 100) % 1001,0,0)); strip.setPixelColor(dot1[a],strip.Color((i * 100) % 1001,0,0)); strip.show();}
+//      if(i % 2){buzzer(1);}
+//      else{buzzer(0);}
+     delay(50);
+   }
+    //buzzer(1);
+    delay(1000);
+    ESP.restart();
+  }  
+}
+
+void blink(int state){
+  if(!state) return;
+
+  unsigned long tmr = millis();
+  static unsigned long saveTime = 0;
+
+  if((tmr - saveTime) > 1000){
+    saveTime = tmr;
+    stateRun = !stateRun;
   }
 }
