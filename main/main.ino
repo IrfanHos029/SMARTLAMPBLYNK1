@@ -60,6 +60,8 @@ bool stateWifi,stateMode;
 bool stateAuto;
 bool wm_nonblocking = false;
 bool stateRun = false;
+bool stateLedAuto2,stateLedAuto3;
+bool lastStateAuto;
 WidgetLED led(V6);
 
 #define BLYNK_GREEN     "#23C48E"
@@ -162,11 +164,8 @@ void setup()
       stateLed2 = EEPROM.read(2);
       stateLed3 = EEPROM.read(3);
       stateAuto = EEPROM.read(4);
-
-      Blynk.virtualWrite(V0,stateLed1);
-      Blynk.virtualWrite(V1,stateLed2);
-      Blynk.virtualWrite(V2,stateLed3);
-      Blynk.virtualWrite(V5,stateAuto);
+      lastStateAuto = stateAuto;
+      
       
       /* switch off led */
       digitalWrite(led_pin, HIGH);
@@ -208,6 +207,10 @@ void setup()
       BlynkEdgent.begin();
       timer.setInterval(1000L, myTimerEvent);
       timer2.setInterval(1000L, sendT);
+      Blynk.virtualWrite(V0,stateLed1);
+      Blynk.virtualWrite(V1,stateLed2);
+      Blynk.virtualWrite(V2,stateLed3);
+      Blynk.virtualWrite(V5,stateAuto);
     }
   }
   else
@@ -232,9 +235,23 @@ void loop() {
     timer.run();
     timer2.run();
     stateWIFI();
-    if(stateAuto){ blink(1); kalkulasi(); }
-    else{ blink(0); stateRun = 0; }
+    if(stateAuto != lastStateAuto){
+      stateLed2 = stateLedAuto2;
+      stateLed3 = stateLedAuto3;
+      Blynk.virtualWrite(V1,stateLed2);
+      Blynk.virtualWrite(V2,stateLed3);
+      lastStateAuto = stateAuto;
+    }
+    if(stateAuto){ 
+      blink(1); 
+      kalkulasi(); 
+    }
+    else if(!stateAuto){ 
+      blink(0); 
+      stateRun = 0; 
+    }
   }
+  
 
   else
   {
@@ -293,21 +310,22 @@ int conversion(int raw_val){
 }
 
 void kalkulasi(){
+  
   if(LDR_Val <= 450 ){
-     stateLed2 = 1;
-     stateLed3 = 1;
+     stateLedAuto2 = 1;
+     stateLedAuto3 = 1;
   }
 
   else if(LDR_Val >= 1000 ){
-     stateLed2 = 0;
-     stateLed3 = 0;
+     stateLedAuto2 = 0;
+     stateLedAuto3 = 0;
   }
 
-  if(stateLed2 == 1 && stateAuto == 1){ digitalWrite( led2,LOW);}
-  else if (stateLed2 == 0 && stateAuto == 1){ digitalWrite( led2,HIGH); }
+  if(stateLedAuto2 == 1 && stateAuto == 1){ digitalWrite( led2,LOW);}
+  else if (stateLedAuto2 == 0 && stateAuto == 1){ digitalWrite( led2,HIGH); }
 
-  if(stateLed3 == 1 && stateAuto == 1){ digitalWrite( led3,LOW);}
-  else if(stateLed3 == 0 && stateAuto == 1){ digitalWrite( led3,HIGH); }
+  if(stateLedAuto3 == 1 && stateAuto == 1){ digitalWrite( led3,LOW);}
+  else if(stateLedAuto3 == 0 && stateAuto == 1){ digitalWrite( led3,HIGH); }
 }
 
 
